@@ -82,12 +82,25 @@ Title/Task/Summary, Description/Details/Notes, Status/State, Priority, Assignee/
 Status words like *WIP, Open, Pending, Completed, On hold* and priorities like *P0–P3, Critical* are understood.
 Rows that can't be read fully are still imported, with a list of what to check. `.csv` (UTF-8) works too.
 
-## Put it online (placeholders to fill)
+## Put it online
 
-1. **Database:** create a Postgres database. Set `DATABASE_URL=postgresql+psycopg://USER:PASSWORD@YOUR-DB-HOST:5432/tasking` and run `uv add "psycopg[binary]"` in `backend/`.
+### On Render (set up in `render.yaml`)
+
+1. Sign in at https://render.com with your GitHub account and allow it to see this repo.
+2. **New → Blueprint**, pick this repo, then **Apply**. Render creates the `tasking` web service from the
+   `Dockerfile` and the `tasking-db` Postgres database. It generates `SECRET_KEY` itself and wires up `DATABASE_URL`.
+3. Wait for the first deploy (several minutes), then open the `https://tasking-….onrender.com` address it shows.
+4. Every push to `main` deploys again.
+
+The blueprint uses **free** plans for trying it out: the app sleeps after a while without visitors (the next visit
+waits about a minute), and Render's free databases expire. Before the team depends on it, switch both to paid plans
+in the Render dashboard.
+
+### Anywhere else
+
+1. **Database:** a Postgres database. Set `DATABASE_URL` (`postgres://…`, `postgresql://…` or `postgresql+psycopg://…` all work).
 2. **Secrets:** set `SECRET_KEY` (32+ random characters) and `APP_ENV=production`. The server refuses to start in production without a strong key.
-3. **Address:** set `APP_URL=https://YOUR-TASKING-DOMAIN.example`.
-4. **Host:** the `Dockerfile` builds one container serving the app and the API on port 8000 (works on Render, Railway, Fly.io, Azure App Service, etc.).
+3. **Host:** the `Dockerfile` builds one container serving the app and the API on `$PORT` (default 8000).
 
 All settings are listed in `backend/.env.example` and `frontend/.env.example`.
 

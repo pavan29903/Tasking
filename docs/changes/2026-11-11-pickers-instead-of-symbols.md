@@ -54,3 +54,20 @@ values in the margin. The line in the note should gain the matching `@name !high
 - The meeting margin pickers don't have Today/Tomorrow buttons, to keep the cards narrow. The date picker has its own "Today".
 - The scratchpad browser test (`e2e/flow.mjs`) still checks the old "→ name" margin chips and needs a small update
   before it is run again.
+
+---
+
+# Addendum 2026-11-12: ready for Render
+
+| File | Change |
+| --- | --- |
+| `render.yaml` (new) | Render Blueprint: Docker web service + Postgres, generated `SECRET_KEY`, health check `/api/health` |
+| `.dockerignore` (new) | Keeps `node_modules`, `.venv`, local DB and `.env` out of the image |
+| `Dockerfile` | uv image pinned to 0.13.6 instead of `latest` |
+| `backend/app/config.py` | `postgres://` and `postgresql://` addresses get the psycopg driver name SQLAlchemy needs |
+| `backend/pyproject.toml` | `psycopg[binary]` added; `pydantic` pinned to 2.13 (Smart App Control blocks pydantic-core 2.50 here) |
+| `backend/tests/test_api.py` | 4 cases for the database address (112 tests in total) |
+
+Verified: `uv run python -m pytest -q` → 112 passed. A Postgres engine builds with the psycopg driver.
+Not verified: the Docker build and a real Postgres run (no Docker or Postgres on this PC). The first Render deploy is
+the first real test of both.

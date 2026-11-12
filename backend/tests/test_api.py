@@ -59,6 +59,18 @@ def test_blank_env_values_fall_back_to_defaults(monkeypatch):
     assert s.database_url == "sqlite://" and s.cors_origins == ["https://a.example", "https://b.example"]
 
 
+@pytest.mark.parametrize("given,expected", [
+    ("postgres://u:p@db.host:5432/tasking", "postgresql+psycopg://u:p@db.host:5432/tasking"),  # Render's form
+    ("postgresql://u:p@db.host/tasking", "postgresql+psycopg://u:p@db.host/tasking"),
+    ("postgresql+psycopg://u:p@db.host/tasking", "postgresql+psycopg://u:p@db.host/tasking"),
+    ("sqlite:///tasking.db", "sqlite:///tasking.db"),
+])
+def test_database_url_names_the_postgres_driver(monkeypatch, given, expected):
+    monkeypatch.setattr("app.config.load_env_file", lambda path: None)
+    monkeypatch.setenv("DATABASE_URL", given)
+    assert Settings.from_env().database_url == expected
+
+
 def test_production_refuses_default_secret():
     for weak in (DEV_SECRET, "", "short-secret"):
         with pytest.raises(RuntimeError):

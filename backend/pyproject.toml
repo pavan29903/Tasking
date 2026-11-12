@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.162.2",
     "openpyxl>=3.1.5",
+    "psycopg[binary]>=3.2",
     "pydantic>=2.13,<2.14",  # 2.14 (pydantic-core 2.50) is blocked by Smart App Control on this PC since 2026-11-12
     "pyjwt>=2.15.1",
     "python-multipart>=0.0.33",

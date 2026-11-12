@@ -1,0 +1,11 @@
+# keep local, OS-specific and private files out of the image
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/*.db
+**/.env
+**/.env.*
+frontend/dist
+frontend/android
+.git

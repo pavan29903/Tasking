@@ -20,6 +20,14 @@ def load_env_file(path: Path) -> None:
         os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
+def database_url(value: str) -> str:
+    """Hosts like Render hand out postgres://... ; SQLAlchemy needs the driver named (psycopg 3)."""
+    for prefix in ("postgres://", "postgresql://"):
+        if value.startswith(prefix):
+            return "postgresql+psycopg://" + value[len(prefix):]
+    return value
+
+
 def _list(value: str) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
@@ -41,7 +49,7 @@ class Settings:
         load_env_file(BASE_DIR / ".env")
         s = cls()
         env = {k: v for k, v in os.environ.items() if v.strip()}  # "KEY=" (blank) means "use the default"
-        s.database_url = env.get("DATABASE_URL", s.database_url)
+        s.database_url = database_url(env.get("DATABASE_URL", s.database_url))
         s.secret_key = env.get("SECRET_KEY", s.secret_key)
         s.app_env = env.get("APP_ENV", s.app_env)
         s.token_hours = int(env.get("TOKEN_HOURS", s.token_hours))
