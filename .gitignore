@@ -1,0 +1,24 @@
+# dependencies and builds
+node_modules/
+frontend/dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# local data and secrets
+*.db
+.env
+.env.*
+!.env.example
+
+# Android build output (the project itself is committed)
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/app/src/main/assets/public/
+*.apk
+*.aab
+*.keystore
+*.jks

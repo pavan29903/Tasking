@@ -1,0 +1,23 @@
+[project]
+name = "tasking-backend"
+version = "0.1.0"
+description = "Tasking API: a simple shared task list for small teams"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.162.2",
+    "openpyxl>=3.1.5",
+    "pydantic>=2.13,<2.14",  # 2.14 (pydantic-core 2.50) is blocked by Smart App Control on this PC since 2026-11-12
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.33",
+    "sqlalchemy>=2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+]

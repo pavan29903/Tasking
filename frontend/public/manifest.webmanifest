@@ -1,0 +1,15 @@
+{
+  "name": "Tasking",
+  "short_name": "Tasking",
+  "description": "A shared task list for you, your lead and your manager.",
+  "start_url": "/#/mine",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef1f4",
+  "theme_color": "#2446c7",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
