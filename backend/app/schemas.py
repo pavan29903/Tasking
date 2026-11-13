@@ -93,6 +93,11 @@ class MemberOut(BaseModel):
     name: str
     email: str
     role: str
+    job_title: Optional[str] = None
+
+
+class MemberIn(Clean):
+    job_title: Optional[str] = Field(None, max_length=40)  # blank or null clears it
 
 
 # ------------------------------------------------------------------ tasks

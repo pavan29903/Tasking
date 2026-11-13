@@ -46,19 +46,40 @@ export function dueInfo(task: Pick<Task, 'due_date' | 'status'>, today: string):
   return { label: date, tone: 'later' };
 }
 
-export interface Filters { query: string; assignee: 'all' | 'me' | 'none' | number; priority: 'all' | Priority }
-export const NO_FILTERS: Filters = { query: '', assignee: 'all', priority: 'all' };
+export interface Filters {
+  query: string; assignee: 'all' | 'me' | 'none' | number; priority: 'all' | Priority;
+  role: string; // '' for any, or a job role such as "Developer": tasks assigned to people with that role
+}
+export const NO_FILTERS: Filters = { query: '', assignee: 'all', priority: 'all', role: '' };
 
-export function filterTasks(tasks: Task[], f: Filters, me: number): Task[] {
+/** Search covers the key, title, details and the names of the assignee and the reporter. */
+export function filterTasks(tasks: Task[], f: Filters, me: number, members: Member[] = []): Task[] {
   const q = f.query.trim().toLowerCase();
+  const byId = new Map(members.map((m) => [m.user_id, m]));
+  const role = f.role.trim().toLowerCase();
   return tasks.filter((t) => {
-    if (q && !`${t.key} ${t.title} ${t.description}`.toLowerCase().includes(q)) return false;
+    const assignee = t.assignee_id === null ? undefined : byId.get(t.assignee_id);
+    const people = `${assignee?.name ?? ''} ${byId.get(t.reporter_id)?.name ?? ''}`;
+    if (q && !`${t.key} ${t.title} ${t.description} ${people}`.toLowerCase().includes(q)) return false;
     if (f.assignee === 'me' && t.assignee_id !== me) return false;
     if (f.assignee === 'none' && t.assignee_id !== null) return false;
     if (typeof f.assignee === 'number' && t.assignee_id !== f.assignee) return false;
     if (f.priority !== 'all' && t.priority !== f.priority) return false;
+    if (role && assignee?.job_title?.trim().toLowerCase() !== role) return false;
     return true;
   });
+}
+
+export const JOB_SUGGESTIONS = ['Manager', 'Team lead', 'Developer', 'QA', 'Design', 'BDA', 'Sales', 'Marketing', 'Operations'];
+
+/** The job roles people in this team actually have, for the Role filter (case-insensitive, first spelling wins). */
+export function jobRoles(members: Member[]): string[] {
+  const seen = new Map<string, string>();
+  for (const m of members) {
+    const title = m.job_title?.trim();
+    if (title && !seen.has(title.toLowerCase())) seen.set(title.toLowerCase(), title);
+  }
+  return [...seen.values()].sort((a, b) => a.localeCompare(b));
 }
 
 /** Most urgent first, then soonest due (no due date last), then newest. */

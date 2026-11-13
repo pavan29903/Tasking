@@ -38,7 +38,8 @@ class Membership(Base):
     __tablename__ = "memberships"
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    role: Mapped[str] = mapped_column(String(10), default="member")  # owner | member
+    role: Mapped[str] = mapped_column(String(10), default="member")  # owner | member: what they may do
+    job_title: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)  # Developer, BDA...: what they do
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

@@ -3,7 +3,7 @@ export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface User { id: number; name: string; email: string }
 export interface Team { id: number; name: string; key: string; invite_code: string; role: 'owner' | 'member' }
-export interface Member { user_id: number; name: string; email: string; role: 'owner' | 'member' }
+export interface Member { user_id: number; name: string; email: string; role: 'owner' | 'member'; job_title?: string | null }
 
 export interface Task {
   id: number;

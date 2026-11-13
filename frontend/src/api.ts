@@ -72,6 +72,8 @@ export const api = {
   rotateInvite: (teamId: number) => request<Team>(`/api/teams/${teamId}/invite-code`, { method: 'POST' }),
   removeMember: (teamId: number, userId: number) =>
     request<void>(`/api/teams/${teamId}/members/${userId}`, { method: 'DELETE' }),
+  setJobTitle: (teamId: number, userId: number, jobTitle: string | null) =>
+    request<Member>(`/api/teams/${teamId}/members/${userId}`, { method: 'PATCH', json: { job_title: jobTitle } }),
 
   tasks: (teamId: number) => request<Task[]>(`/api/teams/${teamId}/tasks`),
   quickAdd: (teamId: number, text: string) => request<Task>(`/api/teams/${teamId}/tasks/quick`, { json: { text } }),

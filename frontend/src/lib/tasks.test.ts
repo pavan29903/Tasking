@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Activity, Task } from '../types';
 import {
   activityText, byUrgency, daysBetween, dueInfo, filterTasks, groupMine, initials, isoDate, NO_FILTERS,
-  mentionFor, pickToken, relativeTime, setToken, sortTasks,
+  jobRoles, mentionFor, pickToken, relativeTime, setToken, sortTasks,
 } from './tasks';
 
 const TODAY = '2026-11-09'; // a Monday
@@ -150,5 +150,42 @@ describe('pickers write shortcuts', () => {
     expect(pickToken('who', null, [meera])).toBeNull();
     expect(pickToken('who', 3, [meera])).toBe('@meera');
     expect(pickToken('who', 99, [meera])).toBeNull();
+  });
+});
+
+describe('people and job roles', () => {
+  const people = [
+    { user_id: 1, name: 'Meera Lead', email: 'm@x.in', role: 'owner' as const, job_title: 'Manager' },
+    { user_id: 2, name: 'Ravi Kumar', email: 'r@x.in', role: 'member' as const, job_title: 'Developer' },
+    { user_id: 3, name: 'Sana Iyer', email: 's@x.in', role: 'member' as const, job_title: ' developer ' },
+    { user_id: 4, name: 'Anil Rao', email: 'a@x.in', role: 'member' as const, job_title: 'BDA' },
+    { user_id: 5, name: 'New Joiner', email: 'n@x.in', role: 'member' as const, job_title: null },
+  ];
+  const api = task({ title: 'Fix API', assignee_id: 2, reporter_id: 1 });
+  const ui = task({ title: 'Fix UI', assignee_id: 3, reporter_id: 2 });
+  const lead = task({ title: 'Call Acme', assignee_id: 4, reporter_id: 1 });
+  const open = task({ title: 'Unowned', assignee_id: null, reporter_id: 5 });
+  const gone = task({ title: 'Left the team', assignee_id: 99, reporter_id: 99 });
+  const all = [api, ui, lead, open, gone];
+
+  it('search finds tasks by the assignee or reporter name', () => {
+    expect(filterTasks(all, { ...NO_FILTERS, query: 'ravi' }, 1, people)).toEqual([api, ui]); // assignee, reporter
+    expect(filterTasks(all, { ...NO_FILTERS, query: 'Anil Rao' }, 1, people)).toEqual([lead]);
+    expect(filterTasks(all, { ...NO_FILTERS, query: 'joiner' }, 1, people)).toEqual([open]);
+    expect(filterTasks(all, { ...NO_FILTERS, query: 'ravi' }, 1)).toEqual([]); // no member list: names unknown
+  });
+  it('role filter matches the assignee job role, ignoring case and spaces', () => {
+    expect(filterTasks(all, { ...NO_FILTERS, role: 'Developer' }, 1, people)).toEqual([api, ui]);
+    expect(filterTasks(all, { ...NO_FILTERS, role: 'bda' }, 1, people)).toEqual([lead]);
+    expect(filterTasks(all, { ...NO_FILTERS, role: 'Manager' }, 1, people)).toEqual([]); // reporter's role doesn't count
+    expect(filterTasks(all, { ...NO_FILTERS, role: '' }, 1, people)).toEqual(all);
+  });
+  it('combines role with other filters', () => {
+    expect(filterTasks(all, { ...NO_FILTERS, role: 'Developer', query: 'ui' }, 1, people)).toEqual([ui]);
+    expect(filterTasks(all, { ...NO_FILTERS, role: 'Developer', assignee: 2 }, 1, people)).toEqual([api]);
+  });
+  it('lists each job role once, sorted, skipping people without one', () => {
+    expect(jobRoles(people)).toEqual(['BDA', 'Developer', 'Manager']);
+    expect(jobRoles([])).toEqual([]);
   });
 });

@@ -52,7 +52,8 @@ cd D:\tasking\frontend; npm run typecheck
 | **Board** | To do / In progress / Blocked / Done. Drag cards between columns. Swipe sideways on a phone. |
 | **List** | Sortable table, search, filters. **Import from Excel** and **Download Excel**. |
 | **Meetings** | Notes on a ruled pad. Action lines show up in the margin; one click turns them into tasks. |
-| **Team** | Invite code and link, members, leave or remove people, join or create another team. |
+| **Team** | Invite code and link, members and their roles (Developer, BDA, Sales…), leave or remove people, join or create another team. |
+| **Search and filters** | On Board and List: search by task text or by the name of the person it's assigned to or was created by; filter by person, priority or role ("Developer tasks"). |
 
 Click any task to open it: change status, owner, priority, due date, add details and comments, and see the history of
 who changed what.

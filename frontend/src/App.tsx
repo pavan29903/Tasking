@@ -10,7 +10,7 @@ import { TaskDrawer } from './components/TaskDrawer';
 import { TaskTable } from './components/TaskTable';
 import { TeamGate } from './components/TeamGate';
 import { TeamPage } from './components/TeamPage';
-import { filterTasks, groupMine, isoDate, memberNames, NO_FILTERS, PRIORITIES, type Filters } from './lib/tasks';
+import { filterTasks, groupMine, isoDate, jobRoles, memberNames, NO_FILTERS, PRIORITIES, type Filters } from './lib/tasks';
 import type { Member, Status, Task, Team, User } from './types';
 
 type View = 'board' | 'list' | 'mine' | 'notes' | 'team';
@@ -143,7 +143,8 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
   if (teams === null) return <div className="center muted">Loading your teams…</div>;
   if (!team) return <TeamGate onReady={addTeam} initialCode={joinCode} onSignOut={onSignOut} />;
 
-  const visible = filterTasks(tasks, filters, user.id);
+  const visible = filterTasks(tasks, filters, user.id, members);
+  const roles = jobRoles(members);
   const mine = groupMine(tasks, user.id, today);
   const myOpen = mine.overdue.length + mine.today.length + mine.week.length + mine.later.length + mine.undated.length;
   const openTask = tasks.find((t) => t.id === openId) ?? null;
@@ -185,7 +186,7 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
         {(view === 'board' || view === 'list') && (
           <div className="filters" role="search">
             <label className="sr-only" htmlFor="search">Search tasks</label>
-            <input id="search" className="input" type="search" placeholder="Search title, details or key" value={filters.query}
+            <input id="search" className="input" type="search" placeholder="Search tasks or people" value={filters.query}
               onChange={(e) => setFilters({ ...filters, query: e.target.value })} />
             <label className="sr-only" htmlFor="f-assignee">Assignee</label>
             <select id="f-assignee" className="select" value={String(filters.assignee)}
@@ -193,15 +194,27 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
               <option value="all">Everyone</option>
               <option value="me">Assigned to me</option>
               <option value="none">Unassigned</option>
-              {members.filter((m) => m.user_id !== user.id).map((m) => <option key={m.user_id} value={m.user_id}>{m.name}</option>)}
+              {members.filter((m) => m.user_id !== user.id).map((m) => (
+                <option key={m.user_id} value={m.user_id}>{m.name}{m.job_title ? ` · ${m.job_title}` : ''}</option>
+              ))}
             </select>
+            {(roles.length > 0 || filters.role) && (
+              <>
+                <label className="sr-only" htmlFor="f-role">Role</label>
+                <select id="f-role" className="select" value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })}>
+                  <option value="">Every role</option>
+                  {roles.map((r) => <option key={r} value={r}>{r} tasks</option>)}
+                  {filters.role && !roles.includes(filters.role) && <option value={filters.role}>{filters.role} tasks</option>}
+                </select>
+              </>
+            )}
             <label className="sr-only" htmlFor="f-priority">Priority</label>
             <select id="f-priority" className="select" value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value as Filters['priority'] })}>
               <option value="all">Any priority</option>
               {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
-            {(filters.query || filters.assignee !== 'all' || filters.priority !== 'all') && (
+            {(filters.query || filters.assignee !== 'all' || filters.priority !== 'all' || filters.role) && (
               <button className="btn ghost small" onClick={() => setFilters(NO_FILTERS)}>Clear filters</button>
             )}
           </div>

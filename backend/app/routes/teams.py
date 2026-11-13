@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from ..access import require_member
 from ..db import get_db
 from ..models import Membership, Task, Team, User
-from ..schemas import JoinIn, MemberOut, TeamIn, TeamOut
+from ..schemas import JoinIn, MemberIn, MemberOut, TeamIn, TeamOut
 from ..security import current_user
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
@@ -66,9 +66,29 @@ def join_team(body: JoinIn, user: User = Depends(current_user), db: Session = De
 @router.get("/{team_id}/members", response_model=List[MemberOut])
 def members(team_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)) -> List[MemberOut]:
     require_member(db, team_id, user)
-    rows = db.execute(select(User, Membership.role).join(Membership, Membership.user_id == User.id)
+    rows = db.execute(select(User, Membership).join(Membership, Membership.user_id == User.id)
                       .where(Membership.team_id == team_id).order_by(User.name)).all()
-    return [MemberOut(user_id=u.id, name=u.name, email=u.email, role=role) for u, role in rows]
+    return [_member(u, m) for u, m in rows]
+
+
+def _member(person: User, membership: Membership) -> MemberOut:
+    return MemberOut(user_id=person.id, name=person.name, email=person.email, role=membership.role,
+                     job_title=membership.job_title)
+
+
+@router.patch("/{team_id}/members/{member_id}", response_model=MemberOut)
+def update_member(team_id: int, member_id: int, body: MemberIn, user: User = Depends(current_user),
+                  db: Session = Depends(get_db)) -> MemberOut:
+    """Set someone's job role (Developer, BDA...). Anyone may set their own; the owner may set anyone's."""
+    me = require_member(db, team_id, user)
+    if member_id != user.id and me.role != "owner":
+        raise HTTPException(403, "Only the team owner can change other people's roles")
+    target = db.get(Membership, (team_id, member_id))
+    if target is None:
+        raise HTTPException(404, "That person is not in this team")
+    target.job_title = " ".join((body.job_title or "").split()) or None
+    db.commit()
+    return _member(db.get(User, member_id), target)
 
 
 @router.post("/{team_id}/invite-code", response_model=TeamOut)

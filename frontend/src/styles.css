@@ -300,6 +300,10 @@ td.title-cell { min-width: 240px; font-weight: 500; }
 .member .who { display: grid; min-width: 0; }
 .member .who span { font-size: 0.8rem; color: var(--graphite); overflow: hidden; text-overflow: ellipsis; }
 .member .btn { margin-left: auto; }
+.member { flex-wrap: wrap; }
+.member .who { flex: 1 1 160px; }
+.member .job { flex: 0 1 190px; width: auto; min-height: 32px; padding: 3px 8px; font-size: 0.85rem; }
+.member .job + .btn { margin-left: 0; }
 
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 40;

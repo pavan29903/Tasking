@@ -7,14 +7,15 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import sessionmaker
 
 from .config import Settings
-from .db import Base, make_engine
+from .db import Base, add_missing_columns, make_engine
 from .routes import auth, meetings, tasks, teams
 
 
 def create_app(settings: Optional[Settings] = None) -> FastAPI:
     settings = settings or Settings.from_env()
     engine = make_engine(settings.database_url)
-    Base.metadata.create_all(engine)  # creates missing tables; see README for schema changes
+    Base.metadata.create_all(engine)  # creates missing tables
+    add_missing_columns(engine)  # and new optional columns on existing ones; anything bigger needs a migration
 
     app = FastAPI(title="Tasking API", version="0.1.0")
     app.state.settings = settings

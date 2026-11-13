@@ -5,6 +5,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 
 from app.config import DEV_SECRET, Settings
+from app.main import create_app
 
 
 # ------------------------------------------------------------------ auth
@@ -128,6 +129,41 @@ def test_leaving_and_removing_members(team):
     assert owner.get(f"/api/teams/{t['id']}/tasks").json()[0]["assignee_id"] is None
     assert member.get(f"/api/tasks/{task['id']}/comments").status_code == 404
     assert owner.delete(f"/api/teams/{t['id']}/members/{member.user['id']}").status_code == 404
+
+
+def test_job_roles(team):
+    t, owner, member, outsider = team["team"], team["owner"], team["member"], team["outsider"]
+    url = f"/api/teams/{t['id']}/members"
+    me, boss = f"{url}/{member.user['id']}", f"{url}/{owner.user['id']}"
+    r = member.patch(me, json={"job_title": "  Senior   Developer "})
+    assert r.status_code == 200 and r.json()["job_title"] == "Senior Developer"  # spaces tidied
+    assert member.patch(boss, json={"job_title": "Intern"}).status_code == 403  # members set only their own
+    assert owner.patch(me, json={"job_title": "BDA"}).json()["job_title"] == "BDA"  # owner sets anyone's
+    assert owner.patch(boss, json={"job_title": "Manager"}).json()["role"] == "owner"  # job role != permissions
+    roles = {m["name"]: m["job_title"] for m in member.get(url).json()}
+    assert roles == {"Meera Lead": "Manager", "Pavan Kumar": "BDA"}
+    assert member.patch(me, json={"job_title": "   "}).json()["job_title"] is None  # blank clears
+    assert member.patch(me, json={"job_title": None}).json()["job_title"] is None
+    assert member.patch(me, json={"job_title": "x" * 41}).status_code == 422
+    assert outsider.patch(me, json={"job_title": "Spy"}).status_code == 404
+    assert owner.patch(f"{url}/{outsider.user['id']}", json={"job_title": "Spy"}).status_code == 404
+
+
+def test_new_optional_columns_are_added_to_an_existing_database(tmp_path):
+    import sqlite3
+    path = tmp_path / "old.db"
+    with sqlite3.connect(path) as old:  # a database made before job roles existed
+        old.execute("CREATE TABLE memberships (team_id INTEGER NOT NULL, user_id INTEGER NOT NULL, "
+                    "role VARCHAR(10) NOT NULL, joined_at DATETIME NOT NULL, PRIMARY KEY (team_id, user_id))")
+        old.execute("INSERT INTO memberships VALUES (1, 1, 'owner', '2026-11-01 10:00:00')")
+    settings = Settings(database_url=f"sqlite:///{path.as_posix()}", frontend_dist=tmp_path / "none",
+                        secret_key="test-secret-" + "x" * 32)
+    for _ in range(2):  # a second start must not try to add it again
+        create_app(settings)
+    with sqlite3.connect(path) as db:
+        columns = [row[1] for row in db.execute("PRAGMA table_info(memberships)")]
+        assert "job_title" in columns
+        assert db.execute("SELECT role, job_title FROM memberships").fetchall() == [("owner", None)]
 
 
 # ------------------------------------------------------------------ tasks
