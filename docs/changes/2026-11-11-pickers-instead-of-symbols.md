@@ -71,3 +71,15 @@ values in the margin. The line in the note should gain the matching `@name !high
 Verified: `uv run python -m pytest -q` → 112 passed. A Postgres engine builds with the psycopg driver.
 Not verified: the Docker build and a real Postgres run (no Docker or Postgres on this PC). The first Render deploy is
 the first real test of both.
+
+# Addendum 2026-11-13: Neon database, and a steadier fix for blocked SQLAlchemy files
+
+- `render.yaml` no longer creates Render's database, which expires on the free plan. `DATABASE_URL` is entered in
+  the Render dashboard (`sync: false`), pointing at Neon's free Postgres, and is never stored in git.
+- The backend tests failed to start with "An Application Control policy has blocked this file" for SQLAlchemy's
+  `_collections_cy` file. Cause: in SQLAlchemy 2.1 the `DISABLE_SQLALCHEMY_CEXT_RUNTIME` setting no longer stops
+  Python from loading the compiled `.pyd` file, so earlier passes only happened because Smart App Control allowed
+  the file that time. Fix: `setup.ps1` deletes those compiled files from the local `.venv`, and SQLAlchemy falls
+  back to the plain-Python copies it ships. The no-op setting in `app/__init__.py` is removed. Linux (Render) is unaffected.
+- Verified: `uv run python -m pytest -q` → 112 passed, three runs in a row. `npm test` → 37 passed. `render.yaml`
+  parses, has no `databases` block, and asks for `DATABASE_URL` in the dashboard.

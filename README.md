@@ -41,7 +41,8 @@ cd D:\tasking\frontend; npm run typecheck
 > (setup.ps1 does this), and the frontend uses Vite 6 because Vite 8's native bundler is blocked.
 > Its verdicts can change over time: on 2026-11-12 it started blocking pydantic-core 2.50, so `pydantic` is pinned to 2.13.
 > If the server stops with "An Application Control policy has blocked this file", try the previous version of the
-> package that file belongs to.
+> package that file belongs to. `setup.ps1` also removes SQLAlchemy's compiled `*_cy*.pyd` files, because the plain-Python
+> copies SQLAlchemy ships next to them are never blocked.
 
 ## How to use it
 

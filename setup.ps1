@@ -7,6 +7,9 @@ if (-not (Test-Path .venv)) {
     py -3 -m venv .venv
 }
 uv sync
+# Smart App Control blocks SQLAlchemy's compiled speed-ups (*_cy*.pyd) at random. SQLAlchemy ships a pure-Python
+# copy of each one, which Python only uses when the compiled file is absent. Linux hosts are unaffected.
+Get-ChildItem .venv\Lib\site-packages\sqlalchemy -Recurse -Filter '*_cy*.pyd' | Remove-Item -Force
 Pop-Location
 
 Push-Location "$PSScriptRoot\frontend"
