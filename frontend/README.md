@@ -9,7 +9,7 @@ The web app for Tasking, also packaged as an Android shell with Capacitor. For t
 ```powershell
 npm install
 npm run dev          # http://localhost:5173, proxies /api to the backend on :8000
-npm test             # 27 tests for date, filter, sort and grouping logic
+npm test             # 41 tests: dates, filters (people, roles), sorting, grouping, pickers
 npm run typecheck
 npm run build        # dist/, which the backend serves
 npm run android:sync # build, then copy into the Android project (set TASKING_APP_URL first; see .env.example)

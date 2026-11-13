@@ -10,7 +10,7 @@ For the whole project, see [../README.md](../README.md). What was built and how 
 py -3 -m venv .venv          # first time only (Smart App Control blocks the venv launcher uv makes)
 uv sync
 uv run python -m uvicorn app.main:create_app --factory --reload   # http://127.0.0.1:8000, docs at /docs
-uv run python -m pytest -q                                        # 105 tests
+uv run python -m pytest -q                                        # 114 tests
 ```
 
 Settings come from environment variables or `backend/.env`. See `.env.example` (`DATABASE_URL`, `SECRET_KEY`,
