@@ -35,6 +35,7 @@ Settings come from environment variables or `backend/.env`. See `.env.example` (
 | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/me` | Accounts; returns `{token, user}` |
 | `GET/POST /api/teams`, `POST /api/teams/join` | My teams, create, join by invite code |
 | `GET /api/teams/{id}/members`, `POST .../invite-code`, `DELETE .../members/{user}` | Members, new code, leave/remove |
+| `PATCH /api/teams/{id}/members/{user}` `{"job_title": "Developer"}` | Job role: your own, or anyone's if you are the owner; blank clears |
 | `GET/POST /api/teams/{id}/tasks`, `POST .../tasks/quick` | List, create, one-line quick add |
 | `PATCH/DELETE /api/tasks/{id}`, `GET/POST .../comments`, `GET .../activity` | Edit, delete, comments, history |
 | `GET /api/teams/{id}/export`, `POST .../import` | Excel download and upload |
@@ -42,3 +43,10 @@ Settings come from environment variables or `backend/.env`. See `.env.example` (
 | `POST /api/teams/{id}/parse`, `POST /api/notes/{id}/convert`, `.../convert-all` | Preview and convert action items |
 
 All routes except register/login/health need `Authorization: Bearer <token>`. The interactive docs are at `/docs`.
+
+## Database changes
+
+There is no migration tool yet. On start-up, `create_all` makes missing tables, and `add_missing_columns`
+(`app/db.py`) adds new **optional** columns to tables that already exist. That is how the live database got
+`memberships.job_title` (see [../docs/changes/2026-11-13-job-roles-and-people-search.md](../docs/changes/2026-11-13-job-roles-and-people-search.md)).
+Anything else (a required column, a rename, a type change) needs a real migration, e.g. Alembic.
