@@ -86,15 +86,16 @@ Rows that can't be read fully are still imported, with a list of what to check. 
 
 ### On Render (set up in `render.yaml`)
 
-1. Sign in at https://render.com with your GitHub account and allow it to see this repo.
-2. **New → Blueprint**, pick this repo, then **Apply**. Render creates the `tasking` web service from the
-   `Dockerfile` and the `tasking-db` Postgres database. It generates `SECRET_KEY` itself and wires up `DATABASE_URL`.
-3. Wait for the first deploy (several minutes), then open the `https://tasking-….onrender.com` address it shows.
-4. Every push to `main` deploys again.
+1. Create a Postgres database. Neon's free plan (https://neon.tech, about 0.5 GB, no expiry) is plenty.
+   Copy its connection string (`postgresql://…?sslmode=require`).
+2. Sign in at https://render.com with your GitHub account and allow it to see this repo.
+3. **New → Blueprint**, pick this repo, then **Apply**. Render creates the `tasking` web service from the
+   `Dockerfile` and generates `SECRET_KEY` itself.
+4. In the service's **Environment** page, set `DATABASE_URL` to the connection string and save. Render redeploys.
+5. Open the `https://tasking-….onrender.com` address it shows. Every push to `main` deploys again.
 
-The blueprint uses **free** plans for trying it out: the app sleeps after a while without visitors (the next visit
-waits about a minute), and Render's free databases expire. Before the team depends on it, switch both to paid plans
-in the Render dashboard.
+The web service uses Render's **free** plan: it sleeps after a while without visitors, so the next visit waits
+about a minute. The data lives in the database, so sleeping loses nothing.
 
 ### Anywhere else
 
