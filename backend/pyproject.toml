@@ -10,6 +10,7 @@ dependencies = [
     "pydantic>=2.13,<2.14",  # 2.14 (pydantic-core 2.50) is blocked by Smart App Control on this PC since 2026-11-12
     "pyjwt>=2.15.1",
     "python-multipart>=0.0.33",
+    "recurring-ical-events>=3",
     "sqlalchemy>=2",
     "uvicorn[standard]>=0.54.0",
 ]

@@ -2,14 +2,16 @@
 
 The web app for Tasking, also packaged as an Android shell with Capacitor. For the whole project, see
 [../README.md](../README.md). What was built and how it was verified:
-[../docs/changes/2026-11-10-tasking-app.md](../docs/changes/2026-11-10-tasking-app.md); later changes are in the same folder (latest: job roles and people search, 2026-11-13).
+[../docs/changes/2026-11-10-tasking-app.md](../docs/changes/2026-11-10-tasking-app.md); later changes are in the same folder (latest: Google Calendar on the Meetings page,
+[../docs/changes/2026-11-13-google-calendar-meetings.md](../docs/changes/2026-11-13-google-calendar-meetings.md), and the Today page,
+[../docs/changes/2026-11-13-todays-work.md](../docs/changes/2026-11-13-todays-work.md)).
 
 ## Commands
 
 ```powershell
 npm install
 npm run dev          # http://localhost:5173, proxies /api to the backend on :8000
-npm test             # 41 tests: dates, filters (people, roles), sorting, grouping, pickers
+npm test             # 54 tests: dates, filters (people, roles), sorting, grouping, pickers, meetings, today's work
 npm run typecheck
 npm run build        # dist/, which the backend serves
 npm run android:sync # build, then copy into the Android project (set TASKING_APP_URL first; see .env.example)
@@ -28,7 +30,9 @@ Vite is pinned to 6 on purpose: Vite 8's native bundler is blocked by Smart App 
 | `src/components/Board.tsx` | Four status columns with drag-and-drop |
 | `src/components/TaskTable.tsx` | Sortable list, Excel import and download |
 | `src/components/MyTasks.tsx` | My work by due date, plus what I'm waiting on |
-| `src/components/Meetings.tsx` | Ruled notes pad with autosave and an action-item margin |
+| `src/components/Today.tsx`, `src/lib/today.ts` | Today's work: your update, the team's updates and active tasks, Heads-up when two people name the same repo/area |
+| `src/components/Meetings.tsx` | Ruled notes pad with autosave and an action-item margin; notes grouped by date |
+| `src/components/Agenda.tsx`, `src/lib/meetings.ts` | Your calendar's meetings by day, with Join and take-notes; connect/disconnect |
 | `src/components/Pickers.tsx` | Who / Priority / Due controls; they write `@name`, `!high`, `due:` into the line (`setToken` in `lib/tasks.ts`) |
 | `src/components/TaskDrawer.tsx` | Task detail: fields, comments, history, delete |
 | `src/components/TeamPage.tsx`, `TeamGate.tsx` | Invite code and link, members and their job roles, create or join a team |

@@ -10,12 +10,14 @@ import { TaskDrawer } from './components/TaskDrawer';
 import { TaskTable } from './components/TaskTable';
 import { TeamGate } from './components/TeamGate';
 import { TeamPage } from './components/TeamPage';
+import { Today } from './components/Today';
 import { filterTasks, groupMine, isoDate, jobRoles, memberNames, NO_FILTERS, PRIORITIES, type Filters } from './lib/tasks';
 import type { Member, Status, Task, Team, User } from './types';
 
-type View = 'board' | 'list' | 'mine' | 'notes' | 'team';
+type View = 'board' | 'list' | 'mine' | 'today' | 'notes' | 'team';
 const VIEWS: { id: View; label: string; title: string; icon: string }[] = [
   { id: 'mine', label: 'My tasks', title: 'My tasks', icon: '◉' },
+  { id: 'today', label: 'Today', title: "Today's work", icon: '☀' },
   { id: 'board', label: 'Board', title: 'Board', icon: '▦' },
   { id: 'list', label: 'List', title: 'All tasks', icon: '☰' },
   { id: 'notes', label: 'Meetings', title: 'Meeting notes', icon: '✎' },
@@ -220,6 +222,7 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
           </div>
         )}
 
+        {view === 'today' && <Today teamId={team.id} me={user} members={members} tasks={tasks} onOpen={openT} toast={toast} />}
         {view === 'mine' && <MyTasks tasks={tasks} me={user.id} names={names} today={today} onOpen={openT} />}
         {view === 'board' && <Board tasks={visible} names={names} today={today} onOpen={openT} onMove={move} />}
         {view === 'list' && <TaskTable tasks={visible} names={names} today={today} teamId={team.id} onOpen={openT} onImported={reload} toast={toast} />}

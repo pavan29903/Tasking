@@ -38,7 +38,7 @@ def create_note(team_id: int, body: NoteIn, user: User = Depends(current_user), 
 @router.put("/notes/{note_id}", response_model=NoteOut)
 def update_note(note_id: int, body: NoteIn, user: User = Depends(current_user), db: Session = Depends(get_db)) -> Note:
     note = get_note(db, note_id, user)
-    for name, value in body.model_dump().items():
+    for name, value in body.model_dump(exclude_unset=True).items():  # fields left out keep their value
         setattr(note, name, value)
     db.commit()
     return note

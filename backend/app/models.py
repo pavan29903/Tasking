@@ -20,6 +20,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(80))
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(200))
+    calendar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # private iCal link: a secret
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -51,6 +52,9 @@ class Note(Base):
     title: Mapped[str] = mapped_column(String(200))
     meeting_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     body: Mapped[str] = mapped_column(Text, default="")
+    starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    meeting_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    event_id: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)  # calendar occurrence the notes are for
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
@@ -92,3 +96,16 @@ class Activity(Base):
     old: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     new: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class DailyUpdate(Base):
+    """What someone is working on for one day in one team, so the team can see it (and spot overlaps)."""
+    __tablename__ = "daily_updates"
+    __table_args__ = (UniqueConstraint("team_id", "user_id", "day"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    team_id: Mapped[int] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
+    text: Mapped[str] = mapped_column(Text, default="")
+    areas: Mapped[str] = mapped_column(String(400), default="")  # comma-separated repos/areas, e.g. "tasking-backend, auth"
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

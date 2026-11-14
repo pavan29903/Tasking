@@ -78,6 +78,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn.ghost { background: transparent; border-color: transparent; }
 .btn.ghost:hover { background: var(--pen-soft); }
 .btn.danger { color: var(--danger); }
+a.btn { text-decoration: none; }
 .btn.small { min-height: 30px; padding: 0 10px; font-size: 0.85rem; }
 .field { display: grid; gap: 4px; }
 .field > span { font-size: 0.8rem; font-weight: 500; color: var(--graphite); }
@@ -217,12 +218,63 @@ td.title-cell { min-width: 240px; font-weight: 500; }
 .row:last-child { border-bottom: 0; }
 .row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 
+/* ------------------------------------------------------------ today's work */
+.today { display: grid; gap: 14px; max-width: 1100px; }
+.day-nav { display: inline-flex; align-items: center; gap: 8px; }
+.day-nav b { min-width: 92px; text-align: center; font-family: var(--display); }
+.clash {
+  display: grid; gap: 4px; padding: 10px 14px; border-radius: 10px; font-size: 0.9rem;
+  background: color-mix(in srgb, var(--blocked) 10%, var(--sheet)); border: 1px solid color-mix(in srgb, var(--blocked) 35%, transparent);
+}
+.work-card { display: grid; gap: 8px; padding: 14px 16px; align-content: start; }
+.work-card.me { border-left: 3px solid var(--pen); }
+.work-card.quiet { background: transparent; box-shadow: none; border-style: dashed; }
+.work-head { display: flex; align-items: center; gap: 10px; }
+.work-head .who { display: grid; line-height: 1.25; min-width: 0; }
+.work-head .when { margin-left: auto; font-family: var(--mono); font-size: 0.75rem; }
+.work-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.work-mine { display: grid; gap: 8px; }
+.work-mine .textarea { resize: vertical; min-height: 76px; }
+.work-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; }
+.work-tasks { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px dashed var(--rule); display: grid; gap: 4px; font-size: 0.85rem; }
+.work-tasks .linkish { text-decoration: none; color: var(--ink); text-align: left; display: inline-flex; gap: 6px; align-items: baseline; }
+.work-tasks .linkish:hover { color: var(--pen); }
+.chip.area { font-family: var(--mono); font-size: 0.72rem; }
+
 /* ------------------------------------------------------------ meeting pad (the signature) */
-.meetings { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; align-items: start; }
-.note-list { display: grid; gap: 6px; }
+.meetings { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.side { display: grid; gap: 22px; align-content: start; }
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+.cal-day h4, .note-group h4 {
+  margin: 6px 0 2px; font: 600 0.7rem var(--body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--graphite);
+}
+
+/* your meetings: a day planner on one sheet */
+.cal { display: grid; gap: 8px; padding: 12px 12px 14px; border-radius: 12px; background: var(--sheet); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.cal-day { display: grid; gap: 2px; }
+.slot { display: flex; align-items: center; gap: 6px; padding-right: 6px; border-radius: 8px; }
+.slot:hover { background: var(--pen-soft); }
+.slot.now { background: var(--pen-soft); box-shadow: inset 3px 0 0 var(--pen); }
+.slot.done { opacity: 0.55; }
+.slot-main {
+  flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10px; padding: 7px 0 7px 8px;
+  border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.slot-time { flex: 0 0 64px; font: 500 0.76rem var(--mono); color: var(--graphite); }
+.slot-body { min-width: 0; display: grid; }
+.slot-body b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-body span { font-size: 0.76rem; color: var(--graphite); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-body .live { color: var(--pen); font-weight: 600; }
+.connect { display: grid; gap: 8px; }
+.steps { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.84rem; }
+.linkish { justify-self: start; padding: 0; border: 0; background: none; color: var(--graphite); font: inherit; text-decoration: underline; cursor: pointer; }
+.linkish.small { font-size: 0.78rem; }
+
+.note-list { display: grid; gap: 4px; }
+.note-group { display: grid; gap: 2px; }
 .note-link {
-  display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent;
-  background: transparent; text-align: left; cursor: pointer;
+  display: grid; gap: 1px; padding: 8px 12px; border-radius: 10px; border: 1px solid transparent;
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
 .note-link:hover { background: var(--sheet); border-color: var(--rule); }
 .note-link[aria-current='true'] { background: var(--sheet); border-color: var(--pen); }
@@ -234,6 +286,9 @@ td.title-cell { min-width: 240px; font-weight: 500; }
   font: 700 1.3rem var(--display); padding: 4px 0; }
 .pad-title:focus { outline: none; border-color: var(--pen); }
 .pad-date { width: auto; }
+.pad-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pad-meta .when { font: 500 0.85rem var(--mono); color: var(--graphite); }
+.pad-meta .input { flex: 1 1 220px; width: auto; min-height: 32px; padding: 4px 8px; font-size: 0.85rem; }
 .ruled {
   --line: 28px;
   width: 100%; min-height: calc(var(--line) * 16); resize: vertical; border: 0; outline: none;

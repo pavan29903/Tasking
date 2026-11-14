@@ -1,5 +1,5 @@
 import type {
-  Activity, Comment, ImportIssue, Member, Note, ParsedItem, Task, TaskPatch, Team, User,
+  Activity, Comment, DailyUpdate, ImportIssue, Member, MyMeetings, Note, ParsedItem, Task, TaskPatch, Team, User,
 } from './types';
 
 // Empty means "same server as the page" (dev proxy, or the API serving the built app).
@@ -84,10 +84,20 @@ export const api = {
   activity: (taskId: number) => request<Activity[]>(`/api/tasks/${taskId}/activity`),
 
   notes: (teamId: number) => request<Note[]>(`/api/teams/${teamId}/notes`),
-  createNote: (teamId: number, note: Pick<Note, 'title' | 'meeting_date' | 'body'>) =>
+  createNote: (teamId: number, note: Pick<Note, 'title' | 'meeting_date' | 'body' | 'starts_at' | 'meeting_link' | 'event_id'>) =>
     request<Note>(`/api/teams/${teamId}/notes`, { json: note }),
-  saveNote: (note: Pick<Note, 'id' | 'title' | 'meeting_date' | 'body'>) =>
-    request<Note>(`/api/notes/${note.id}`, { method: 'PUT', json: { title: note.title, meeting_date: note.meeting_date, body: note.body } }),
+  saveNote: (note: Pick<Note, 'id' | 'title' | 'meeting_date' | 'body' | 'meeting_link'>) =>
+    request<Note>(`/api/notes/${note.id}`, { method: 'PUT', json: {
+      title: note.title, meeting_date: note.meeting_date, body: note.body, meeting_link: note.meeting_link || null } }),
+
+  updates: (teamId: number, day: string) => request<DailyUpdate[]>(`/api/teams/${teamId}/updates?day=${day}`),
+  /** Blank text and no areas removes your update (returns undefined). */
+  saveUpdate: (teamId: number, day: string, text: string, areas: string[]) =>
+    request<DailyUpdate | undefined>(`/api/teams/${teamId}/updates/${day}`, { method: 'PUT', json: { text, areas } }),
+
+  myMeetings: () => request<MyMeetings>('/api/me/meetings'),
+  connectCalendar: (url: string) => request<MyMeetings>('/api/me/calendar', { method: 'PUT', json: { url } }),
+  disconnectCalendar: () => request<void>('/api/me/calendar', { method: 'DELETE' }),
   deleteNote: (id: number) => request<void>(`/api/notes/${id}`, { method: 'DELETE' }),
   parse: (teamId: number, text: string) => request<ParsedItem[]>(`/api/teams/${teamId}/parse`, { json: { text } }),
   convertLine: (noteId: number, line: number, text: string) =>

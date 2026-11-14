@@ -34,7 +34,12 @@ export interface Activity {
 export interface Note {
   id: number; team_id: number; author_id: number; title: string;
   meeting_date: string | null; body: string; created_at: string; updated_at: string;
+  starts_at?: string | null; meeting_link?: string | null; event_id?: string | null;
 }
+
+/** One occurrence of a meeting from your connected calendar. */
+export interface Meeting { id: string; title: string; starts_at: string; ends_at: string; link: string | null; attendees: string[] }
+export interface MyMeetings { connected: boolean; error: string | null; meetings: Meeting[] }
 
 export interface ParsedItem {
   line: number; text: string; title: string;
@@ -43,3 +48,6 @@ export interface ParsedItem {
 }
 
 export interface ImportIssue { row: number | null; message: string; skipped: boolean }
+
+/** What someone is working on for a day, in one team. */
+export interface DailyUpdate { user_id: number; day: string; text: string; areas: string[]; updated_at: string }

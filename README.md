@@ -49,9 +49,10 @@ cd D:\tasking\frontend; npm run typecheck
 | Where | What you do |
 | --- | --- |
 | **My tasks** | Your open work by due date (overdue, today, next 7 days…), plus "Waiting on others": tasks you asked someone else to do. |
+| **Today** | Everyone's work for the day: write what you're on and which repo or area it touches. You see the whole team's updates and their in-progress tasks. If two people name the same repo, a Heads-up banner tells them to check with each other before pushing. Filter by role; look back at earlier days. |
 | **Board** | To do / In progress / Blocked / Done. Drag cards between columns. Swipe sideways on a phone. |
 | **List** | Sortable table, search, filters. **Import from Excel** and **Download Excel**. |
-| **Meetings** | Notes on a ruled pad. Action lines show up in the margin; one click turns them into tasks. |
+| **Meetings** | Your Google Calendar meetings with **Join** buttons (connect it once: Meetings → Connect Google Calendar), and notes on a ruled pad. Click a meeting to take notes for it. Action lines show up in the margin; one click turns them into tasks. |
 | **Team** | Invite code and link, members and their roles (Developer, BDA, Sales…), leave or remove people, join or create another team. |
 | **Search and filters** | On Board and List: search by task text or by the name of the person it's assigned to or was created by; filter by person, priority or role ("Developer tasks"). |
 
@@ -128,14 +129,14 @@ Phones can also install the site directly: open it in Chrome, then **Add to Home
 backend/app/
   main.py        app factory, serves frontend/dist when built
   models.py      users, teams, memberships, tasks, comments, activity, notes
-  routes/        auth, teams, tasks (+ Excel), meetings (notes -> tasks)
+  routes/        auth, teams, tasks (+ Excel), meetings (notes -> tasks), calendar (your meetings)
   notes.py       action-item parser (@name, !priority, due:)
   excel.py       import/export
   access.py      membership checks, task numbering, history
 backend/tests/   pytest
 frontend/src/
   App.tsx        layout, navigation, data loading
-  components/    Board, TaskTable, MyTasks, Meetings, TaskDrawer, TeamPage, Auth
+  components/    Board, TaskTable, MyTasks, Meetings, Agenda, TaskDrawer, TeamPage, Auth
   lib/tasks.ts   pure helpers (dates, filters, grouping), tested in tasks.test.ts
 frontend/android/  Capacitor Android project
 docs/changes/    what was built and how it was verified

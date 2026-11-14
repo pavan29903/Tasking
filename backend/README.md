@@ -2,7 +2,9 @@
 
 The API for Tasking. It also serves the built web app from `../frontend/dist` when that folder exists.
 For the whole project, see [../README.md](../README.md). What was built and how it was verified:
-[../docs/changes/2026-11-10-tasking-app.md](../docs/changes/2026-11-10-tasking-app.md).
+[../docs/changes/2026-11-10-tasking-app.md](../docs/changes/2026-11-10-tasking-app.md). Recent changes: calendar meetings
+(`app/calendar.py`, `routes/calendar.py`): [../docs/changes/2026-11-13-google-calendar-meetings.md](../docs/changes/2026-11-13-google-calendar-meetings.md);
+today's work (`routes/today.py`): [../docs/changes/2026-11-13-todays-work.md](../docs/changes/2026-11-13-todays-work.md).
 
 ## Commands
 
@@ -10,7 +12,7 @@ For the whole project, see [../README.md](../README.md). What was built and how 
 py -3 -m venv .venv          # first time only (Smart App Control blocks the venv launcher uv makes)
 uv sync
 uv run python -m uvicorn app.main:create_app --factory --reload   # http://127.0.0.1:8000, docs at /docs
-uv run python -m pytest -q                                        # 114 tests
+uv run python -m pytest -q                                        # 149 tests
 ```
 
 Settings come from environment variables or `backend/.env`. See `.env.example` (`DATABASE_URL`, `SECRET_KEY`,
@@ -21,12 +23,13 @@ Settings come from environment variables or `backend/.env`. See `.env.example` (
 | File | What it does |
 | --- | --- |
 | `app/main.py` | `create_app()`: database, CORS, routers, static web app |
-| `app/models.py` | Tables: users, teams, memberships, tasks, comments, activity, notes |
+| `app/models.py` | Tables: users, teams, memberships, tasks, comments, activity, notes, daily_updates |
 | `app/access.py` | Membership checks (outsiders get 404), task numbering under a row lock, change history |
 | `app/security.py` | scrypt password hashes, JWT tokens, `current_user` dependency |
 | `app/notes.py` | Action-item parser: `[ ]`/`todo:` lines, `@name`, `!priority`, `due:` |
+| `app/calendar.py` | Reads a private iCal link (Google/Outlook hosts only): repeating meetings, join links, 3-minute cache |
 | `app/excel.py` | `.xlsx`/`.csv` import with column aliases and per-row issues; `.xlsx` export |
-| `app/routes/` | `auth`, `teams`, `tasks` (comments, history, Excel), `meetings` (notes → tasks) |
+| `app/routes/` | `auth`, `teams`, `tasks` (comments, history, Excel), `meetings` (notes → tasks), `calendar`, `today` (daily updates) |
 
 ## API at a glance
 
@@ -40,6 +43,8 @@ Settings come from environment variables or `backend/.env`. See `.env.example` (
 | `PATCH/DELETE /api/tasks/{id}`, `GET/POST .../comments`, `GET .../activity` | Edit, delete, comments, history |
 | `GET /api/teams/{id}/export`, `POST .../import` | Excel download and upload |
 | `GET/POST /api/teams/{id}/notes`, `PUT/DELETE /api/notes/{id}` | Meeting notes |
+| `GET /api/me/meetings`, `PUT/DELETE /api/me/calendar` `{"url": ...}` | Your meetings from your calendar; connect (checked first) or disconnect. The link is never returned |
+| `GET /api/teams/{id}/updates?day=YYYY-MM-DD`, `PUT .../updates/{day}` `{"text", "areas": [...]}` | Everyone's work for a day; write your own (blank removes it) |
 | `POST /api/teams/{id}/parse`, `POST /api/notes/{id}/convert`, `.../convert-all` | Preview and convert action items |
 
 All routes except register/login/health need `Authorization: Bearer <token>`. The interactive docs are at `/docs`.

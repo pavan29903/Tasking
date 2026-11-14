@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from .config import Settings
 from .db import Base, add_missing_columns, make_engine
-from .routes import auth, meetings, tasks, teams
+from .routes import auth, calendar, meetings, tasks, teams, today
 
 
 def create_app(settings: Optional[Settings] = None) -> FastAPI:
@@ -22,7 +22,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     app.state.sessionmaker = sessionmaker(engine, expire_on_commit=False)
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=False,
                        allow_methods=["*"], allow_headers=["*"], expose_headers=["Content-Disposition"])
-    for module in (auth, teams, tasks, meetings):
+    for module in (auth, teams, tasks, meetings, calendar, today):
         app.include_router(module.router)
 
     @app.get("/api/health", tags=["health"])

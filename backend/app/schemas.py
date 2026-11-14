@@ -180,6 +180,18 @@ class NoteIn(Clean):
     title: str = Field(min_length=1, max_length=200)
     meeting_date: Optional[date] = None
     body: str = Field(default="", max_length=50000)
+    starts_at: Optional[datetime] = None
+    meeting_link: Optional[str] = Field(None, max_length=500)
+    event_id: Optional[str] = Field(None, max_length=300)
+
+    @field_validator("meeting_link")
+    @classmethod
+    def _web_link(cls, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        if not re.match(r"^https?://\S+$", value, re.I):
+            raise ValueError("Paste the meeting's web link, starting with https://")
+        return value
 
 
 class NoteOut(Out):
@@ -189,8 +201,59 @@ class NoteOut(Out):
     title: str
     meeting_date: Optional[date]
     body: str
+    starts_at: Optional[UTCDateTime] = None
+    meeting_link: Optional[str] = None
+    event_id: Optional[str] = None
     created_at: UTCDateTime
     updated_at: UTCDateTime
+
+
+# ------------------------------------------------------------------ today's work
+class UpdateIn(Clean):
+    text: str = Field(default="", max_length=2000)
+    areas: List[str] = Field(default_factory=list, max_length=8)
+
+    @field_validator("areas")
+    @classmethod
+    def _tidy(cls, value: List[str]) -> List[str]:
+        out: List[str] = []
+        for area in (part for item in value for part in item.split(",")):  # commas separate areas
+            area = " ".join(area.split())
+            if len(area) > 40:
+                raise ValueError("Keep each repo or area under 40 characters")
+            if area and area.lower() not in (a.lower() for a in out):
+                out.append(area)
+        if len(out) > 8:
+            raise ValueError("Up to 8 repos or areas")
+        return out
+
+
+class UpdateOut(BaseModel):
+    user_id: int
+    day: date
+    text: str
+    areas: List[str]
+    updated_at: UTCDateTime
+
+
+# ------------------------------------------------------------------ calendar
+class CalendarIn(BaseModel):
+    url: str = Field(min_length=1, max_length=2000)
+
+
+class MeetingOut(Out):
+    id: str
+    title: str
+    starts_at: UTCDateTime
+    ends_at: UTCDateTime
+    link: Optional[str]
+    attendees: List[str]
+
+
+class MeetingsOut(BaseModel):
+    connected: bool
+    error: Optional[str] = None
+    meetings: List[MeetingOut] = []
 
 
 class ParseIn(BaseModel):

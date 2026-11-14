@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
+import { clock, dayLabel, noteGroups, safeLink } from '../lib/meetings';
 import { isoDate, pickToken, setToken, type PickKind } from '../lib/tasks';
-import type { Member, Note, ParsedItem, Task } from '../types';
+import type { Meeting, Member, MyMeetings, Note, ParsedItem, Task } from '../types';
+import { Agenda } from './Agenda';
 import { errorText, useDebounced } from './bits';
 import { Pickers } from './Pickers';
 
 type SaveState = 'saved' | 'saving' | 'unsaved' | 'error';
-const TEMPLATE = 'Attendees: \n\nDiscussed\n- \n\nAction items\n[ ] ';
+const template = (attendees = '') => `Attendees: ${attendees}\n\nDiscussed\n- \n\nAction items\n[ ] `;
+const CALENDAR_MS = 5 * 60_000;
 
 export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, onTasksCreated, onOpenTask, toast }: {
   teamId: number; members: Member[]; tasks: Task[]; focusNoteId: number | null; onSeeMembers: (ids: (number | null)[]) => void;
@@ -20,6 +23,20 @@ export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, on
   const latest = useRef<Note | null>(null);
   const pad = useRef<HTMLTextAreaElement>(null);
   const dirty = useRef(false);
+  const padTop = useRef<HTMLDivElement>(null);
+  const [calendar, setCalendar] = useState<MyMeetings | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  // your calendar: on open, every few minutes, and the clock ticks each minute for "Now" / "In 5 min"
+  const loadCalendar = useCallback(() => {
+    api.myMeetings().then(setCalendar).catch(() => setCalendar((c) => c ?? { connected: false, error: null, meetings: [] }));
+  }, []);
+  useEffect(() => {
+    loadCalendar();
+    const cal = setInterval(loadCalendar, CALENDAR_MS);
+    const tick = setInterval(() => setNow(new Date()), 60_000);
+    return () => { clearInterval(cal); clearInterval(tick); };
+  }, [loadCalendar]);
 
   useEffect(() => {
     let live = true;
@@ -103,22 +120,34 @@ export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, on
     });
   }
 
-  async function open(note: Note) {
-    await save();
+  function show(note: Note) {
     setCurrent(note);
     latest.current = note;
+    if (window.matchMedia('(max-width: 860px)').matches) requestAnimationFrame(() => padTop.current?.scrollIntoView({ behavior: 'smooth' }));
   }
 
-  async function create() {
+  async function open(note: Note) {
+    await save();
+    show(note);
+  }
+
+  async function create(from?: Meeting) {
     await save();
     try {
-      const today = isoDate();
       const label = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-      const note = await api.createNote(teamId, { title: `Meeting notes, ${label}`, meeting_date: today, body: TEMPLATE });
+      const note = await api.createNote(teamId, from ? {
+        title: from.title, meeting_date: isoDate(new Date(from.starts_at)), body: template(from.attendees.join(', ')),
+        starts_at: from.starts_at, meeting_link: safeLink(from.link), event_id: from.id,
+      } : { title: `Meeting notes, ${label}`, meeting_date: isoDate(), body: template() });
       setNotes((list) => [note, ...(list ?? [])]);
-      setCurrent(note);
-      latest.current = note;
+      show(note);
     } catch (e) { toast(errorText(e), true); }
+  }
+
+  // a meeting opens its notes in this team, or starts them
+  async function takeNotes(m: Meeting) {
+    const existing = notes?.find((n) => n.event_id === m.id);
+    if (existing) await open(existing); else await create(m);
   }
 
   async function convert(item: ParsedItem | 'all') {
@@ -153,23 +182,40 @@ export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, on
 
   const pending = items.filter((i) => !i.task_key);
   const name = (id: number | null) => members.find((m) => m.user_id === id)?.name;
+  const today = isoDate(now);
+  const join = safeLink(current?.meeting_link);
 
   return (
     <div className="meetings">
-      <nav className="note-list" aria-label="Meeting notes">
-        <button className="btn primary" onClick={create}>New meeting notes</button>
-        {notes === null && <p className="muted small">Loading…</p>}
-        {notes?.length === 0 && <p className="muted small">No notes yet. Start one at your next 1:1 or stand-up.</p>}
-        {notes?.map((n) => (
-          <button key={n.id} className="note-link" aria-current={n.id === current?.id} onClick={() => open(n)}>
-            <b>{n.id === current?.id ? current.title : n.title}</b>
-            <span className="muted small">{n.meeting_date ?? 'No date'}</span>
-          </button>
-        ))}
-      </nav>
+      <div className="side">
+        <Agenda data={calendar} now={now} notes={notes ?? []} onTakeNotes={takeNotes} onChange={setCalendar}
+          onRefresh={loadCalendar} toast={toast} />
+
+        <nav className="note-list" aria-label="Meeting notes">
+          <div className="side-head">
+            <h3>Notes</h3>
+            <button className="btn small" onClick={() => create()}>+ New notes</button>
+          </div>
+          {notes === null && <p className="muted small">Loading…</p>}
+          {notes?.length === 0 && <p className="muted small">No notes yet. Pick a meeting above, or start blank notes.</p>}
+          {noteGroups(notes ?? [], today).map((g) => (
+            <div key={g.label} className="note-group">
+              <h4>{g.label}</h4>
+              {g.items.map((n) => (
+                <button key={n.id} className="note-link" aria-current={n.id === current?.id} onClick={() => open(n)}>
+                  <b>{n.id === current?.id ? current.title : n.title}</b>
+                  <span className="muted small">
+                    {n.meeting_date ? dayLabel(n.meeting_date, today) : 'No date'}{n.starts_at ? ` · ${clock(n.starts_at)}` : ''}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </div>
 
       {current ? (
-        <div className="pad-wrap">
+        <div className="pad-wrap" ref={padTop}>
           <section className="sheet pad">
             <div className="pad-head">
               <label className="sr-only" htmlFor="note-title">Title</label>
@@ -178,6 +224,13 @@ export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, on
               <label className="sr-only" htmlFor="note-date">Meeting date</label>
               <input id="note-date" type="date" className="input pad-date" value={current.meeting_date ?? ''}
                 onChange={(e) => edit({ meeting_date: e.target.value || null })} />
+            </div>
+            <div className="pad-meta">
+              {current.starts_at && <span className="when">{clock(current.starts_at)}</span>}
+              <label className="sr-only" htmlFor="note-link">Meeting link</label>
+              <input id="note-link" className="input" type="url" maxLength={500} value={current.meeting_link ?? ''}
+                placeholder="Meeting link (Meet, Zoom, Teams)" onChange={(e) => edit({ meeting_link: e.target.value })} />
+              {join && <a className="btn small primary" href={join} target="_blank" rel="noopener noreferrer">Join meeting</a>}
             </div>
             <label className="sr-only" htmlFor="note-body">Notes</label>
             <textarea id="note-body" ref={pad} className="ruled" value={current.body} readOnly={busy} spellCheck
@@ -228,7 +281,7 @@ export function Meetings({ teamId, members, tasks, focusNoteId, onSeeMembers, on
             })}
           </aside>
         </div>
-      ) : notes?.length === 0 ? null : <p className="muted">Pick notes on the left.</p>}
+      ) : notes?.length === 0 ? null : <p className="muted">Pick a meeting or notes on the left.</p>}
     </div>
   );
 }
