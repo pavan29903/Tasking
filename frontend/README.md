@@ -30,7 +30,7 @@ Vite is pinned to 6 on purpose: Vite 8's native bundler is blocked by Smart App 
 | `src/lib/tasks.ts` | Pure helpers: due labels, filters (search covers people's names; role filter uses the assignee's job role), sorting, My-tasks groups, history sentences |
 | `src/components/Board.tsx` | Four status columns with drag-and-drop |
 | `src/components/TaskTable.tsx` | Sortable list, Excel import and download |
-| `src/components/MyTasks.tsx` | My work by due date, plus what I'm waiting on; → Today buttons; tasks not finished on Today come back on top |
+| `src/components/MyTasks.tsx` | Two columns: To do (by due date, plus what I'm waiting on; → Today buttons; tasks not finished on Today on top) and Done (last 7 days); tick boxes move tasks between them |
 | `src/components/Today.tsx`, `src/lib/today.ts` | Today's work: your Today's tasks checklist and update, the team's updates and Today tasks, Heads-up when two people name the same repo/area |
 | `src/components/Meetings.tsx` | Ruled notes pad with autosave and an action-item margin; notes grouped by date |
 | `src/components/Agenda.tsx`, `src/lib/meetings.ts` | Your calendar's meetings by day, with Join and take-notes; connect/disconnect |

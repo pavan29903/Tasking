@@ -56,6 +56,18 @@ done the next day comes back to My tasks on top, under **Not finished on Today**
   back after a reload. The previous day showed yesterday's list with the checkbox disabled. History read "put it on
   Today's tasks for 2026-11-14". Phone width (390 px): no sideways scroll on either page. No console errors.
 
+## Update: My tasks in two columns (To do | Done)
+My tasks is now two columns with a ruled line between them. **To do** on the left holds everything open (not
+finished on Today, overdue, due today, next 7 days, later, no due date, waiting on others). **Done** on the right
+lists what you finished in the last 7 days, newest first, with the day it was done. Each of your tasks has a tick
+box: ticking moves it to Done at once; unticking a Done task sends it back to To do (status To do). Below 1000 px
+wide, Done moves underneath and the line turns horizontal. Files: `MyTasks.tsx`, `App.tsx` (passes `move`),
+`styles.css` (`.mine-cols`, `.done-col`, `.tick`).
+
+Checked in Chromium, dark mode, 1700 px: To do and Done side by side; ticking "pricing" moved it to Done and it
+stayed there after a reload; unticking the other done task moved it back to To do. 390 px: Done below, no
+sideways scroll. No console errors. Type-check, 60 frontend tests and build clean.
+
 ## Limits
 - One Today date per task: if a task is on Monday's list, not finished, and moved to Tuesday, Monday's view no longer
   shows it.

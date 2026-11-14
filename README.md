@@ -48,7 +48,7 @@ cd D:\tasking\frontend; npm run typecheck
 
 | Where | What you do |
 | --- | --- |
-| **My tasks** | Your open work by due date (overdue, due today, next 7 days…), plus "Waiting on others": tasks you asked someone else to do. **→ Today** moves a task to your Today list; tasks not finished by the end of the day come back here on top. |
+| **My tasks** | Two columns. **To do**: your open work by due date (overdue, due today, next 7 days…), plus "Waiting on others": tasks you asked someone else to do. **Done**: what you finished in the last 7 days. Tick a task to move it to Done; untick to bring it back. **→ Today** moves a task to your Today list; tasks not finished by the end of the day come back here on top. |
 | **Today** | Everyone's work for the day: your **Today's tasks** checklist (tick when done, ↩ to send back, + to add from My tasks), plus what you're on and which repo or area it touches. You see the whole team's updates and Today tasks. If two people name the same repo, a Heads-up banner tells them to check with each other before pushing. Filter by role; look back at earlier days. |
 | **Board** | To do / In progress / Blocked / Done. Drag cards between columns. Swipe sideways on a phone. |
 | **List** | Sortable table, search, filters. **Import from Excel** and **Download Excel**. |

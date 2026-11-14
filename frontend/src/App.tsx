@@ -232,7 +232,7 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
         )}
 
         {view === 'today' && <Today teamId={team.id} me={user} members={members} tasks={tasks} onOpen={openT} onPlan={plan} onMove={move} toast={toast} />}
-        {view === 'mine' && <MyTasks tasks={tasks} me={user.id} names={names} today={today} onOpen={openT} onPlan={plan} onGoToday={() => go('today')} />}
+        {view === 'mine' && <MyTasks tasks={tasks} me={user.id} names={names} today={today} onOpen={openT} onPlan={plan} onMove={move} onGoToday={() => go('today')} />}
         {view === 'board' && <Board tasks={visible} names={names} today={today} onOpen={openT} onMove={move} />}
         {view === 'list' && <TaskTable tasks={visible} names={names} today={today} teamId={team.id} onOpen={openT} onImported={reload} toast={toast} />}
         {view === 'notes' && <Meetings teamId={team.id} members={members} tasks={tasks} focusNoteId={focusNote} onSeeMembers={seeMembers}

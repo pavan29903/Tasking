@@ -203,7 +203,19 @@ td.title-cell { min-width: 240px; font-weight: 500; }
 .issues { display: grid; gap: 4px; max-height: 180px; overflow: auto; margin: 6px 0 0; padding-left: 18px; font-size: 0.85rem; }
 
 /* ------------------------------------------------------------ my tasks */
-.groups { display: grid; gap: 22px; max-width: 860px; }
+.groups { display: grid; gap: 22px; max-width: 860px; align-content: start; }
+/* My tasks: open work on the left, a ruled line, finished work on the right */
+.mine-cols { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(260px, 1fr); max-width: 1320px; align-items: start; }
+.mine-cols > .groups { max-width: none; padding-right: 24px; }
+.done-col { align-content: start; padding-left: 24px; border-left: 1px solid var(--rule); min-height: 100%; }
+.col-title { display: flex; gap: 8px; align-items: baseline; font: 600 1.15rem var(--display); }
+.col-title .n { font: 500 0.75rem var(--mono); color: var(--graphite); }
+.done-col h2 { font: 600 1.15rem var(--display); }
+.row.done-row { grid-template-columns: minmax(0, 1fr) auto; }
+.done-row .t { color: var(--graphite); font-weight: 400; }
+.done-row .key { margin-right: 4px; }
+.row-line .tick { width: 18px; height: 18px; margin-left: 14px; flex: none; accent-color: var(--pen); cursor: pointer; }
+.row-line .tick + .row { padding-left: 10px; }
 .group { display: grid; gap: 8px; }
 .group h2 { display: flex; gap: 8px; align-items: baseline; font-size: 1rem; }
 .group h2 .n { font: 500 0.75rem var(--mono); color: var(--graphite); }
@@ -392,6 +404,12 @@ td.title-cell { min-width: 240px; font-weight: 500; }
 }
 @media (max-width: 860px) {
   .meetings, .team-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1000px) {
+  /* not enough room for two columns: Done goes underneath, and the ruled line turns sideways */
+  .mine-cols { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .mine-cols > .groups { padding-right: 0; }
+  .done-col { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--rule); min-height: 0; }
 }
 @media (max-width: 760px) {
   .app { grid-template-columns: minmax(0, 1fr); } /* plain 1fr lets the wide board push the page sideways */
