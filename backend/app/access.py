@@ -10,7 +10,7 @@ from .models import Activity, Comment, Membership, Note, Task, Team, User
 from .notes import Member
 from .schemas import TaskOut
 
-TRACKED = ("title", "status", "priority", "assignee_id", "due_date", "description")
+TRACKED = ("title", "status", "priority", "assignee_id", "due_date", "description", "planned_on")
 
 
 def require_member(db: Session, team_id: int, user: User) -> Membership:
@@ -66,6 +66,10 @@ def create_task(db: Session, team: Team, user: User, data: Dict[str, Any], note_
 def apply_patch(db: Session, task: Task, user: User, changes: Dict[str, Any]) -> None:
     if "assignee_id" in changes:
         check_assignee(db, task.team_id, changes["assignee_id"])
+        if changes["assignee_id"] != task.assignee_id:
+            changes.setdefault("planned_on", None)  # a Today list is the assignee's own; the new owner plans it
+    if changes.get("planned_on") and changes.get("assignee_id", task.assignee_id) is None:
+        raise HTTPException(422, "Assign the task to someone before putting it on Today")
     for name, value in changes.items():
         if name not in TRACKED or getattr(task, name) == value:
             continue
@@ -80,7 +84,7 @@ def task_out(task: Task, key: str, comment_count: int = 0) -> TaskOut:
     return TaskOut(id=task.id, key=f"{key}-{task.number}", number=task.number, team_id=task.team_id,
                    title=task.title, description=task.description, status=task.status, priority=task.priority,
                    assignee_id=task.assignee_id, reporter_id=task.reporter_id, due_date=task.due_date,
-                   note_id=task.note_id, comment_count=comment_count, created_at=task.created_at,
+                   note_id=task.note_id, planned_on=task.planned_on, comment_count=comment_count, created_at=task.created_at,
                    updated_at=task.updated_at)
 
 

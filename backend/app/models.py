@@ -73,6 +73,8 @@ class Task(Base):
     reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     note_id: Mapped[Optional[int]] = mapped_column(ForeignKey("notes.id", ondelete="SET NULL"), nullable=True)
+    # the day the assignee put it on their Today list; unfinished ones fall back to My tasks the next day
+    planned_on: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 

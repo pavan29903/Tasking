@@ -215,8 +215,26 @@ td.title-cell { min-width: 240px; font-weight: 500; }
   text-align: left; cursor: pointer;
 }
 .row:hover { background: var(--pen-soft); }
-.row:last-child { border-bottom: 0; }
 .row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.row-line { display: flex; align-items: center; border-bottom: 1px solid var(--rule); }
+.row-line:last-child { border-bottom: 0; }
+.row-line .row { flex: 1; min-width: 0; border-bottom: 0; }
+.row-line .to-today { margin-right: 10px; flex: none; white-space: nowrap; }
+.group h2 .group-action { margin-left: auto; }
+.notice.on-today { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* Today's tasks: a checklist on your card */
+.today-list { display: grid; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--rule); }
+.today-list .side-head h3 { font-size: 0.9rem; }
+.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.plan li { display: flex; align-items: center; gap: 10px; padding: 4px 0; min-width: 0; }
+.plan input[type="checkbox"] { width: 18px; height: 18px; flex: none; accent-color: var(--pen); cursor: pointer; }
+.plan .linkish { text-decoration: none; color: var(--ink); text-align: left; min-width: 0; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan .linkish:hover { color: var(--pen); }
+.plan li.done .t, .struck { text-decoration: line-through; color: var(--graphite); }
+.plan .btn { flex: none; }
+.today-list .select { justify-self: start; max-width: 100%; }
 
 /* ------------------------------------------------------------ today's work */
 .today { display: grid; gap: 14px; max-width: 1100px; }

@@ -110,13 +110,17 @@ export function sortTasks(tasks: Task[], key: SortKey, dir: 1 | -1, names: Map<n
 }
 
 export interface MyGroups {
-  overdue: Task[]; today: Task[]; week: Task[]; later: Task[]; undated: Task[];
+  leftover: Task[]; overdue: Task[]; today: Task[]; week: Task[]; later: Task[]; undated: Task[];
   waiting: Task[]; doneRecently: Task[];
+  onToday: Task[]; // open tasks on my Today list: shown on the Today page, not in My tasks
 }
 
-/** "My tasks": what is assigned to me by due date, plus what I asked others for. */
+/** "My tasks": what is assigned to me by due date, plus what I asked others for. Tasks I moved to Today
+ *  leave the list for the day; if they are not done by the end of it, they come back under "leftover". */
 export function groupMine(tasks: Task[], me: number, today: string): MyGroups {
-  const g: MyGroups = { overdue: [], today: [], week: [], later: [], undated: [], waiting: [], doneRecently: [] };
+  const g: MyGroups = {
+    leftover: [], overdue: [], today: [], week: [], later: [], undated: [], waiting: [], doneRecently: [], onToday: [],
+  };
   for (const t of tasks) {
     if (t.status === 'done') {
       if (t.assignee_id === me && daysBetween(isoDate(new Date(t.updated_at)), today) <= 7) g.doneRecently.push(t);
@@ -126,7 +130,9 @@ export function groupMine(tasks: Task[], me: number, today: string): MyGroups {
       if (t.reporter_id === me && t.assignee_id !== null) g.waiting.push(t);
       continue;
     }
-    if (!t.due_date) g.undated.push(t);
+    if (t.planned_on && t.planned_on >= today) g.onToday.push(t);
+    else if (t.planned_on) g.leftover.push(t);
+    else if (!t.due_date) g.undated.push(t);
     else {
       const days = daysBetween(today, t.due_date);
       (days < 0 ? g.overdue : days === 0 ? g.today : days <= 7 ? g.week : g.later).push(t);
@@ -169,6 +175,7 @@ export function activityText(a: Activity, names: Map<number, string>): string {
     case 'due_date': return a.new === null ? 'removed the due date' : `set the due date to ${a.new}`;
     case 'title': return `renamed it to “${a.new}”`;
     case 'description': return 'edited the description';
+    case 'planned_on': return a.new === null ? "moved it back to My tasks" : `put it on Today's tasks for ${a.new}`;
     default: return `changed ${a.field}`;
   }
 }

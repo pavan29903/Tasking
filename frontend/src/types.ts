@@ -18,12 +18,13 @@ export interface Task {
   reporter_id: number;
   due_date: string | null; // YYYY-MM-DD
   note_id: number | null;
+  planned_on: string | null; // YYYY-MM-DD: on the assignee's Today list for that day
   comment_count: number;
   created_at: string;
   updated_at: string;
 }
 
-export type TaskPatch = Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee_id' | 'due_date'>>;
+export type TaskPatch = Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'assignee_id' | 'due_date' | 'planned_on'>>;
 
 export interface Comment { id: number; task_id: number; author_id: number; author_name: string; body: string; created_at: string }
 export interface Activity {

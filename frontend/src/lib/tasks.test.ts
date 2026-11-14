@@ -11,7 +11,7 @@ function task(over: Partial<Task> = {}): Task {
   n += 1;
   return {
     id: n, key: `SRC-${n}`, number: n, team_id: 1, title: `Task ${n}`, description: '', status: 'todo',
-    priority: 'medium', assignee_id: null, reporter_id: 1, due_date: null, note_id: null, comment_count: 0,
+    priority: 'medium', assignee_id: null, reporter_id: 1, due_date: null, note_id: null, planned_on: null, comment_count: 0,
     created_at: '2026-11-01T10:00:00+00:00', updated_at: '2026-11-08T10:00:00+00:00', ...over,
   };
 }
@@ -90,8 +90,23 @@ describe('groupMine', () => {
     const g = groupMine([overdue, today, week, later, undated, waiting, unassignedByMe, doneRecently, doneLongAgo, task()], me, TODAY);
     expect(g).toEqual({
       overdue: [overdue], today: [today], week: [week], later: [later], undated: [undated],
-      waiting: [waiting], doneRecently: [doneRecently],
+      waiting: [waiting], doneRecently: [doneRecently], leftover: [], onToday: [],
     });
+  });
+
+  it("moves tasks on today's list out, and brings unfinished ones from earlier days back on top", () => {
+    const me = 7;
+    const onToday = task({ assignee_id: me, planned_on: TODAY, due_date: TODAY });
+    const doneToday = task({ assignee_id: me, planned_on: TODAY, status: 'done', updated_at: '2026-11-09T10:00:00Z' });
+    const fromFriday = task({ assignee_id: me, planned_on: '2026-11-06', status: 'in_progress', due_date: '2026-12-25' });
+    const doneFriday = task({ assignee_id: me, planned_on: '2026-11-06', status: 'done', updated_at: '2026-11-06T10:00:00Z' });
+    const someoneElses = task({ assignee_id: 9, planned_on: TODAY });
+    const g = groupMine([onToday, doneToday, fromFriday, doneFriday, someoneElses], me, TODAY);
+    expect(g.onToday).toEqual([onToday]);
+    expect(g.today).toEqual([]); // due today, but it is on the Today list instead
+    expect(g.leftover).toEqual([fromFriday]);
+    expect(g.later).toEqual([]); // shown once, as leftover, not again by due date
+    expect(g.doneRecently).toEqual([doneToday, doneFriday].sort(byUrgency)); // done stays done
   });
 });
 
@@ -110,6 +125,8 @@ describe('text helpers', () => {
     [row('assignee_id', '2', null), 'unassigned Ravi'],
     [row('assignee_id', null, '99'), 'assigned it to a former member'],
     [row('due_date', null, '2026-11-20'), 'set the due date to 2026-11-20'],
+    [row('planned_on', null, '2026-11-14'), "put it on Today's tasks for 2026-11-14"],
+    [row('planned_on', '2026-11-14', null), 'moved it back to My tasks'],
     [row('due_date', '2026-11-20', null), 'removed the due date'],
     [row('description', null, null), 'edited the description'],
   ])('activityText %#', (a, text) => {

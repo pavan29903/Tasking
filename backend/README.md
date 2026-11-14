@@ -4,7 +4,8 @@ The API for Tasking. It also serves the built web app from `../frontend/dist` wh
 For the whole project, see [../README.md](../README.md). What was built and how it was verified:
 [../docs/changes/2026-11-10-tasking-app.md](../docs/changes/2026-11-10-tasking-app.md). Recent changes: calendar meetings
 (`app/calendar.py`, `routes/calendar.py`): [../docs/changes/2026-11-13-google-calendar-meetings.md](../docs/changes/2026-11-13-google-calendar-meetings.md);
-today's work (`routes/today.py`): [../docs/changes/2026-11-13-todays-work.md](../docs/changes/2026-11-13-todays-work.md).
+today's work (`routes/today.py`): [../docs/changes/2026-11-13-todays-work.md](../docs/changes/2026-11-13-todays-work.md);
+today's tasks (`tasks.planned_on`): [../docs/changes/2026-11-14-todays-tasks.md](../docs/changes/2026-11-14-todays-tasks.md).
 
 ## Commands
 
@@ -12,7 +13,7 @@ today's work (`routes/today.py`): [../docs/changes/2026-11-13-todays-work.md](..
 py -3 -m venv .venv          # first time only (Smart App Control blocks the venv launcher uv makes)
 uv sync
 uv run python -m uvicorn app.main:create_app --factory --reload   # http://127.0.0.1:8000, docs at /docs
-uv run python -m pytest -q                                        # 149 tests
+uv run python -m pytest -q                                        # 157 tests
 ```
 
 Settings come from environment variables or `backend/.env`. See `.env.example` (`DATABASE_URL`, `SECRET_KEY`,
@@ -40,7 +41,7 @@ Settings come from environment variables or `backend/.env`. See `.env.example` (
 | `GET /api/teams/{id}/members`, `POST .../invite-code`, `DELETE .../members/{user}` | Members, new code, leave/remove |
 | `PATCH /api/teams/{id}/members/{user}` `{"job_title": "Developer"}` | Job role: your own, or anyone's if you are the owner; blank clears |
 | `GET/POST /api/teams/{id}/tasks`, `POST .../tasks/quick` | List, create, one-line quick add |
-| `PATCH/DELETE /api/tasks/{id}`, `GET/POST .../comments`, `GET .../activity` | Edit, delete, comments, history |
+| `PATCH/DELETE /api/tasks/{id}`, `GET/POST .../comments`, `GET .../activity` | Edit, delete, comments, history. `{"planned_on": "YYYY-MM-DD"}` puts a task on its assignee's Today list; `null` sends it back |
 | `GET /api/teams/{id}/export`, `POST .../import` | Excel download and upload |
 | `GET/POST /api/teams/{id}/notes`, `PUT/DELETE /api/notes/{id}` | Meeting notes |
 | `GET /api/me/meetings`, `PUT/DELETE /api/me/calendar` `{"url": ...}` | Your meetings from your calendar; connect (checked first) or disconnect. The link is never returned |

@@ -117,6 +117,7 @@ class TaskPatch(Clean):
     priority: Optional[Priority] = None
     assignee_id: Optional[int] = None
     due_date: Optional[date] = None
+    planned_on: Optional[date] = None  # put on the assignee's Today list; null sends it back to My tasks
 
 
 class QuickIn(Clean):
@@ -136,6 +137,7 @@ class TaskOut(BaseModel):
     reporter_id: int
     due_date: Optional[date]
     note_id: Optional[int]
+    planned_on: Optional[date] = None
     comment_count: int = 0
     created_at: UTCDateTime
     updated_at: UTCDateTime

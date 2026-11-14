@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { clock, dayLabel } from '../lib/meetings';
 import { isoDate, jobRoles } from '../lib/tasks';
-import { activeTasks, overlaps, parseAreas, peopleText, shiftDay } from '../lib/today';
-import type { DailyUpdate, Member, Task, User } from '../types';
+import { cardTasks, overlaps, parseAreas, peopleText, pickable, plannedTasks, shiftDay } from '../lib/today';
+import type { DailyUpdate, Member, Status, Task, User } from '../types';
 import { Avatar, Dot, errorText } from './bits';
 
 const POLL_MS = 60_000;
@@ -11,15 +11,67 @@ const POLL_MS = 60_000;
 function TaskLines({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Task) => void }) {
   if (tasks.length === 0) return null;
   return (
-    <ul className="work-tasks" aria-label="Tasks on the go">
+    <ul className="work-tasks" aria-label="Their tasks">
       {tasks.map((t) => (
         <li key={t.id}>
           <button className="linkish" onClick={() => onOpen(t)}>
-            <Dot s={t.status} /> <span className="key">{t.key}</span> {t.title}
+            <Dot s={t.status} /> <span className="key">{t.key}</span> <span className={t.status === 'done' ? 'struck' : undefined}>{t.title}</span>
           </button>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Your Today list: tick when done, send back to My tasks, or add more from My tasks. Earlier days are read-only. */
+function MyList({ planned, options, day, canEdit, onOpen, onPlan, onMove }: {
+  planned: Task[]; options: Task[]; day: string; canEdit: boolean; onOpen: (t: Task) => void;
+  onPlan: (t: Task, day: string | null) => void; onMove: (t: Task, s: Status) => void;
+}) {
+  const done = planned.filter((t) => t.status === 'done').length;
+  return (
+    <div className="today-list">
+      <div className="side-head">
+        <h3>Today's tasks</h3>
+        {planned.length > 0 && <span className="small muted">{done} of {planned.length} done</span>}
+      </div>
+      {planned.length === 0 && (
+        <p className="small muted">
+          {canEdit ? 'Nothing on your list yet. Add tasks from My tasks; anything not done today goes back there tomorrow.'
+            : 'No tasks were on your list that day.'}
+        </p>
+      )}
+      {planned.length > 0 && (
+        <ul className="plan">
+          {planned.map((t) => (
+            <li key={t.id} className={t.status === 'done' ? 'done' : undefined}>
+              <input type="checkbox" checked={t.status === 'done'} disabled={!canEdit}
+                aria-label={`${t.key} done`} onChange={(e) => onMove(t, e.target.checked ? 'done' : 'in_progress')} />
+              <button className="linkish" onClick={() => onOpen(t)}>
+                <span className="key">{t.key}</span> <span className="t">{t.title}</span>
+              </button>
+              {(t.status === 'in_progress' || t.status === 'blocked') && (
+                <span className="small muted">{t.status === 'blocked' ? 'Blocked' : 'In progress'}</span>
+              )}
+              {canEdit && t.status !== 'done' && (
+                <button className="btn ghost small" aria-label={`Move ${t.key} back to My tasks`} title="Back to My tasks"
+                  onClick={() => onPlan(t, null)}>↩ My tasks</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {canEdit && options.length > 0 && (
+        <>
+          <label className="sr-only" htmlFor="plan-add">Add a task from My tasks</label>
+          <select id="plan-add" className="select" value=""
+            onChange={(e) => { const t = options.find((o) => o.id === Number(e.target.value)); if (t) onPlan(t, day); }}>
+            <option value="">+ Add from My tasks…</option>
+            {options.map((t) => <option key={t.id} value={t.id}>{t.key} {t.title}</option>)}
+          </select>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -85,8 +137,9 @@ function Mine({ teamId, day, mine, onSaved, toast }: {
   );
 }
 
-export function Today({ teamId, me, members, tasks, onOpen, toast }: {
+export function Today({ teamId, me, members, tasks, onOpen, onPlan, onMove, toast }: {
   teamId: number; me: User; members: Member[]; tasks: Task[]; onOpen: (t: Task) => void;
+  onPlan: (t: Task, day: string | null) => void; onMove: (t: Task, s: Status) => void;
   toast: (msg: string, bad?: boolean) => void;
 }) {
   const today = isoDate();
@@ -159,7 +212,8 @@ export function Today({ teamId, me, members, tasks, onOpen, toast }: {
         </div>
         {updates === null ? <p className="small muted">Loading…</p>
           : <Mine key={`${teamId}-${day}`} teamId={teamId} day={day} mine={mine} onSaved={saved} toast={toast} />}
-        {isToday && <TaskLines tasks={activeTasks(tasks, me.id)} onOpen={onOpen} />}
+        <MyList planned={plannedTasks(tasks, me.id, day)} options={isToday ? pickable(tasks, me.id, day) : []} day={day}
+          canEdit={isToday} onOpen={onOpen} onPlan={onPlan} onMove={onMove} />
       </section>
 
       <div className="side-head">
@@ -172,8 +226,9 @@ export function Today({ teamId, me, members, tasks, onOpen, toast }: {
       <div className="work-grid">
         {others.map((m) => {
           const u = byUser.get(m.user_id);
+          const theirs = cardTasks(tasks, m.user_id, day, isToday);
           return (
-            <article key={m.user_id} className={`sheet work-card${u ? '' : ' quiet'}`}>
+            <article key={m.user_id} className={`sheet work-card${u || theirs.length ? '' : ' quiet'}`}>
               <div className="work-head">
                 <Avatar name={m.name} />
                 <span className="who"><b>{m.name}</b>{m.job_title && <span className="small muted">{m.job_title}</span>}</span>
@@ -181,7 +236,7 @@ export function Today({ teamId, me, members, tasks, onOpen, toast }: {
               </div>
               {u?.text ? <p className="work-text">{u.text}</p> : !u && <p className="small muted">No update yet.</p>}
               {u && <Areas areas={u.areas} shared={shared} />}
-              {isToday && <TaskLines tasks={activeTasks(tasks, m.user_id)} onOpen={onOpen} />}
+              <TaskLines tasks={theirs} onOpen={onOpen} />
             </article>
           );
         })}

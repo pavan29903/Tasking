@@ -135,6 +135,15 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
     try { upsert([await api.updateTask(task.id, { status })]); } catch (e) { upsert([task]); toast(errorText(e), true); }
   }
 
+  /** Put a task on today's list (day) or send it back to My tasks (null). */
+  async function plan(task: Task, day: string | null) {
+    upsert([{ ...task, planned_on: day }]);
+    try {
+      upsert([await api.updateTask(task.id, { planned_on: day })]);
+      toast(day ? `${task.key} is on Today` : `${task.key} is back in My tasks`);
+    } catch (e) { upsert([task]); toast(errorText(e), true); }
+  }
+
   const go = (v: View) => { window.location.hash = `/${v}`; };
   const addTeam = (t: Team) => {
     setTeams((list) => [...(list ?? []).filter((x) => x.id !== t.id), t].sort((a, b) => a.name.localeCompare(b.name)));
@@ -222,8 +231,8 @@ function Workspace({ user, onSignOut }: { user: User; onSignOut: () => void }) {
           </div>
         )}
 
-        {view === 'today' && <Today teamId={team.id} me={user} members={members} tasks={tasks} onOpen={openT} toast={toast} />}
-        {view === 'mine' && <MyTasks tasks={tasks} me={user.id} names={names} today={today} onOpen={openT} />}
+        {view === 'today' && <Today teamId={team.id} me={user} members={members} tasks={tasks} onOpen={openT} onPlan={plan} onMove={move} toast={toast} />}
+        {view === 'mine' && <MyTasks tasks={tasks} me={user.id} names={names} today={today} onOpen={openT} onPlan={plan} onGoToday={() => go('today')} />}
         {view === 'board' && <Board tasks={visible} names={names} today={today} onOpen={openT} onMove={move} />}
         {view === 'list' && <TaskTable tasks={visible} names={names} today={today} teamId={team.id} onOpen={openT} onImported={reload} toast={toast} />}
         {view === 'notes' && <Meetings teamId={team.id} members={members} tasks={tasks} focusNoteId={focusNote} onSeeMembers={seeMembers}

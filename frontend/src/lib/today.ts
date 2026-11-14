@@ -43,3 +43,23 @@ export function activeTasks(tasks: Task[], userId: number): Task[] {
   return tasks.filter((t) => t.assignee_id === userId && t.status in rank)
     .sort((a, b) => rank[a.status] - rank[b.status] || b.number - a.number);
 }
+
+/** What someone put on their Today list for `day`: unfinished first (in progress, to do, blocked), then done. */
+export function plannedTasks(tasks: Task[], userId: number, day: string): Task[] {
+  const rank = { in_progress: 0, todo: 1, blocked: 2, done: 3 } as Record<string, number>;
+  return tasks.filter((t) => t.assignee_id === userId && t.planned_on === day)
+    .sort((a, b) => rank[a.status] - rank[b.status] || b.number - a.number);
+}
+
+/** Tasks on a teammate's card: their Today list, plus (today only) anything else they have on the go. */
+export function cardTasks(tasks: Task[], userId: number, day: string, isToday: boolean): Task[] {
+  const planned = plannedTasks(tasks, userId, day);
+  if (!isToday) return planned;
+  return [...planned, ...activeTasks(tasks, userId).filter((t) => t.planned_on !== day)];
+}
+
+/** My open tasks that could go on today's list: in progress first, then by urgency order of the list. */
+export function pickable(tasks: Task[], userId: number, day: string): Task[] {
+  return activeTasks(tasks, userId).concat(tasks.filter((t) => t.assignee_id === userId && t.status === 'todo'))
+    .filter((t) => t.planned_on !== day);
+}

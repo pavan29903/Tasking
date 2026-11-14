@@ -94,3 +94,71 @@ def test_updates_stay_in_their_team(team):
     other = member.post("/api/teams", json={"name": "Side project", "key": "SIDE"}).json()
     member.put(f"/api/teams/{other['id']}/updates/{TODAY}", json={"text": "Side work"})
     assert _list(team["owner"], team) == []
+
+
+# ---- Today's tasks: a task moved onto someone's Today list (planned_on), and back
+
+def _task(api, team, **body):
+    r = api.post(f"/api/teams/{team['team']['id']}/tasks", json={"title": "Fix login", **body})
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def test_move_a_task_to_today_and_back(team):
+    member = team["member"]
+    task = _task(member, team, assignee_id=member.user["id"])
+    assert task["planned_on"] is None
+    r = member.patch(f"/api/tasks/{task['id']}", json={"planned_on": TODAY})
+    assert r.status_code == 200, r.text
+    assert r.json()["planned_on"] == TODAY and r.json()["status"] == "todo"  # moving doesn't change the status
+    listed = {t["id"]: t for t in team["owner"].get(f"/api/teams/{team['team']['id']}/tasks").json()}
+    assert listed[task["id"]]["planned_on"] == TODAY  # the manager sees it on their Today list too
+    back = member.patch(f"/api/tasks/{task['id']}", json={"planned_on": None})
+    assert back.json()["planned_on"] is None
+    history = [(a["field"], a["new"]) for a in member.get(f"/api/tasks/{task['id']}/activity").json()]
+    assert ("planned_on", TODAY) in history and ("planned_on", None) in history
+
+
+def test_done_keeps_the_day_it_was_planned(team):
+    member = team["member"]
+    task = _task(member, team, assignee_id=member.user["id"])
+    member.patch(f"/api/tasks/{task['id']}", json={"planned_on": TODAY})
+    done = member.patch(f"/api/tasks/{task['id']}", json={"status": "done"}).json()
+    assert done["planned_on"] == TODAY  # still shows on that day's list, ticked
+
+
+def test_reassigning_takes_it_off_the_old_owners_today(team):
+    owner, member = team["owner"], team["member"]
+    task = _task(owner, team, assignee_id=member.user["id"])
+    member.patch(f"/api/tasks/{task['id']}", json={"planned_on": TODAY})
+    moved = owner.patch(f"/api/tasks/{task['id']}", json={"assignee_id": owner.user["id"]}).json()
+    assert moved["planned_on"] is None
+    # reassigning and planning in one go keeps the plan
+    both = owner.patch(f"/api/tasks/{task['id']}", json={"assignee_id": member.user["id"], "planned_on": TODAY}).json()
+    assert both["planned_on"] == TODAY
+    # an unrelated change leaves the plan alone
+    assert owner.patch(f"/api/tasks/{task['id']}", json={"priority": "high"}).json()["planned_on"] == TODAY
+
+
+def test_unassigned_task_cannot_go_on_today(team):
+    member = team["member"]
+    task = _task(member, team)
+    r = member.patch(f"/api/tasks/{task['id']}", json={"planned_on": TODAY})
+    assert r.status_code == 422 and "Assign" in r.text
+    # unassigning a planned task clears the plan rather than failing
+    mine = _task(member, team, assignee_id=member.user["id"])
+    member.patch(f"/api/tasks/{mine['id']}", json={"planned_on": TODAY})
+    r = member.patch(f"/api/tasks/{mine['id']}", json={"assignee_id": None})
+    assert r.status_code == 200 and r.json()["planned_on"] is None
+
+
+@pytest.mark.parametrize("bad", ["today", "2026-13-01", 5])
+def test_planned_on_must_be_a_date(team, bad):
+    member = team["member"]
+    task = _task(member, team, assignee_id=member.user["id"])
+    assert member.patch(f"/api/tasks/{task['id']}", json={"planned_on": bad}).status_code == 422
+
+
+def test_outsider_cannot_plan_a_task(team):
+    task = _task(team["member"], team, assignee_id=team["member"].user["id"])
+    assert team["outsider"].patch(f"/api/tasks/{task['id']}", json={"planned_on": TODAY}).status_code == 404
